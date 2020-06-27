@@ -1,8 +1,10 @@
 package com.example.pmusicapp;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -14,6 +16,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -21,7 +25,7 @@ import com.google.firebase.auth.FirebaseAuth;
 public class Login extends AppCompatActivity {
     Button mLoginBtn;
     EditText mEmail, mPassword;
-    TextView mRegisterHere;
+    TextView mRegisterHere, forgotPasswordTextLink;
     ProgressBar progressBar;
     FirebaseAuth fAuth;
     @Override
@@ -34,6 +38,7 @@ public class Login extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBarLogin);
         mLoginBtn = findViewById(R.id.loginBtn);
         mRegisterHere = findViewById(R.id.registerHere);
+        forgotPasswordTextLink = findViewById(R.id.forgotPassword);
         fAuth = FirebaseAuth.getInstance();
 
         mLoginBtn.setOnClickListener(new View.OnClickListener() {
@@ -78,6 +83,48 @@ public class Login extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(getApplicationContext(), Register.class));
+            }
+        });
+
+        forgotPasswordTextLink.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final EditText resetEmail = new EditText(v.getContext());
+                AlertDialog.Builder passwordResetDialog = new AlertDialog.Builder(v.getContext());
+                passwordResetDialog.setTitle("Đặt lại mật khẩu?");
+                passwordResetDialog.setMessage("Nhập Email để lấy lại mật khẩu?");
+                passwordResetDialog.setView(resetEmail);
+
+                passwordResetDialog.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // trich xuat email va gui link reset
+
+                        String mail = resetEmail.getText().toString();
+                        fAuth.sendPasswordResetEmail(mail).addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                Toast.makeText(Login.this, "Reset Link đã gửi đến Email của bạn !", Toast.LENGTH_LONG).show();
+
+                            }
+                        }).addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Toast.makeText(Login.this, "Lỗi ! Link Reset chưa được gửi" + e.getMessage(), Toast.LENGTH_SHORT).show();
+
+                            }
+                        });
+                    }
+                });
+
+                passwordResetDialog.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // close dialog
+                    }
+                });
+
+                passwordResetDialog.create().show();
             }
         });
     }
